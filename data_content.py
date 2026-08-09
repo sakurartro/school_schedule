@@ -18,9 +18,6 @@ class DaySchedule:
     lessons: list[Lesson]
 
 
-
-
-
 class WeekParsing:
     def __init__(self, raw_data: list[list]):
         self.schedule: list[DaySchedule]
@@ -44,6 +41,8 @@ class WeekParsing:
 
             elif len(row) > 3:
                 cabinet_row = row[4] if len(row) > 4 else None
+                if isinstance(cabinet_row, float):
+                    cabinet_row = int(cabinet_row)
                 lesson_row = row[3] if len(row) > 3 else None
                 cabinet = str(cabinet_row).replace("\xa0", "").strip() if cabinet_row else None
                 lesson = str(lesson_row).replace("\xa0", "").strip() if lesson_row else None
@@ -56,22 +55,6 @@ class WeekParsing:
         if current_day:
             all_days.append(DaySchedule(weekday=current_day, lessons=current_lessons))
         return all_days
-
-
-                
-
-        
-
-
-            
-                
-
-                
-                
-
-        
-
-
 
 async def main():
     raw_data = await asyncio.to_thread(get_raw_data)
