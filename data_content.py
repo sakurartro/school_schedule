@@ -26,7 +26,7 @@ class WeekParsing:
     def __str__(self) -> str:
         return f"WeekParsing(raw_data={self.raw_data!r})"
 
-    def parse_table(self) -> list[DaySchedule]:
+    def parse_table_week(self) -> list[DaySchedule]:
         all_days: list[DaySchedule] = []
         current_day: str | None = None
         current_lessons: list[Lesson] = []
@@ -39,27 +39,30 @@ class WeekParsing:
                     current_lessons = []
                 current_day = first_cell
 
-            elif len(row) > 3:
-                cabinet_row = row[4] if len(row) > 4 else None
+            if current_day and len(row) > 3:
+                cabinet_row = row[4]
                 if isinstance(cabinet_row, float):
                     cabinet_row = int(cabinet_row)
-                lesson_row = row[3] if len(row) > 3 else None
-                cabinet = str(cabinet_row).replace("\xa0", "").strip() if cabinet_row else None
-                lesson = str(lesson_row).replace("\xa0", "").strip() if lesson_row else None
+                lesson_row = row[3] 
+                cabinet = str(cabinet_row).replace("\xa0", "").strip() if cabinet_row else "-"
+                lesson = str(lesson_row).replace("\xa0", "").strip() if lesson_row else "-"
                 lesson_obj = Lesson(
                     cabinet=cabinet,
                     lesson=lesson,
-                    time=row[2] if len(row) > 2 else None
+                    time=row[2] 
                 )
                 current_lessons.append(lesson_obj)
         if current_day:
             all_days.append(DaySchedule(weekday=current_day, lessons=current_lessons))
         return all_days
 
+
+    
+
 async def main():
     raw_data = await asyncio.to_thread(get_raw_data)
     schedule = WeekParsing(raw_data)
-    valids = schedule.parse_table()
+    valids = schedule.parse_table_week()
     print(valids)
 
 

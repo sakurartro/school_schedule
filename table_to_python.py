@@ -12,3 +12,10 @@ def get_raw_data():
     ws = wb.get_sheet_by_name(GRADE)
     return ws.to_python()
 
+
+def main():
+    print(get_raw_data())
+
+
+if __name__ == "__main__":
+    main()
