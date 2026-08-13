@@ -5,18 +5,23 @@ import asyncio
 from table_to_python import get_raw_data
 from datetime import datetime
 import os
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+
+
+scheduler = AsyncIOScheduler()
 
 load_dotenv()
 
 PUBLIC_KEY: str = os.getenv("TABLE_LINK", "")
 
 async def get_latest_schedule_week() -> list[DaySchedule] | None:
-    downloader: YandexDiskParsing = YandexDiskParsing(PUBLIC_KEY)
+    # downloader: YandexDiskParsing = YandexDiskParsing(PUBLIC_KEY)
 
-    is_updated: bool = await downloader.update_data()
+    # is_updated: bool = await downloader.update_data()
 
-    if not is_updated:
-        return None
+    # if not is_updated:
+    #     return None
 
     raw_data: list = await asyncio.to_thread(get_raw_data)
 
@@ -26,33 +31,13 @@ async def get_latest_schedule_week() -> list[DaySchedule] | None:
 
     return latest_schedule
 
-
-async def get_latest_schedule_day() -> DaySchedule | None:
-    day_num = datetime.now().weekday()
-    downloader = YandexDiskParsing(PUBLIC_KEY)
-
-    is_updated = await downloader.update_data()
-
-    if not is_updated:
-        return None
-
-    raw_data = await asyncio.to_thread(get_raw_data)
-
-    schedule = WeekParsing(raw_data)
-
-    latest_schedule: list = schedule.parse_table_week()
-
-    
-
-    today_data = latest_schedule[day_num]
-
-    return today_data
+scheduler.add_job(get_latest_schedule_week, trigger=IntervalTrigger(minutes=5))
 
 
 
 if __name__ == "__main__":
-    print(asyncio.run(get_latest_schedule_day()))
-
+    week = asyncio.run(get_latest_schedule_week())
+    print(week)
 
 
 
