@@ -5,24 +5,21 @@ from data_content import DaySchedule
 from models import LastInfo
 
 
-async def add_data(msgid: int, chatid: int, tg_id: int, schedule: DaySchedule | list[DaySchedule]) -> None:
+async def add_data(chatid: int, tg_id: int, schedule: list[DaySchedule]) -> None:
     async with async_session() as session:
         result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
         if result:
             return None
-        if isinstance(schedule, list):
-            schedule_data = [asdict(day) for day in schedule]
-        else:
-            schedule_data = asdict(schedule)
-        new_data = LastInfo(tg_id=tg_id, msg_id=msgid, chat_id=chatid, last_schedule=schedule_data)
+        schedule_data = [asdict(day) for day in schedule]
+        new_data = LastInfo(tg_id=tg_id, chat_id=chatid, last_schedule=schedule_data)
         session.add(new_data)
         await session.commit()
 
-async def add_lessons(tg_id, schedule):
+async def add_lessons(tg_id: int, schedule: list[DaySchedule]) -> None:
     async with async_session() as session:
         result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
         if result:
-            result.last_schedule = schedule
+            result.last_schedule = [asdict(day) for day in schedule]
             await session.commit()
 
 
@@ -30,3 +27,9 @@ async def get_data_id(tg_id: int):
     async with async_session() as session:
         result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
         return result
+
+
+async def get_all_data() -> list[LastInfo]:
+    async with async_session() as session:
+        result = await session.scalars(select(LastInfo))
+        return list(result)

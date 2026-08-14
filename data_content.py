@@ -12,10 +12,26 @@ class Lesson:
     time: str | None = None
 
 
-@dataclass 
+@dataclass
 class DaySchedule:
     weekday: str
     lessons: list[Lesson]
+
+
+def find_day(days: list[DaySchedule], weekday_index: int) -> DaySchedule | None:
+    name = weekdays[weekday_index]
+    for day in days:
+        if day.weekday == name:
+            return day
+    return None
+
+
+def find_day_dict(days: list[dict], weekday_index: int) -> dict | None:
+    name = weekdays[weekday_index]
+    for day in days:
+        if day.get("weekday") == name:
+            return day
+    return None
 
 
 class WeekParsing:
