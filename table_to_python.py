@@ -7,8 +7,8 @@ load_dotenv()
 
 GRADE: str = os.getenv("DEFAULT_GRADE", "8 класс")
 
-def get_raw_data():
-    wb = CalamineWorkbook.from_path("table.xlsx")
+def get_raw_data(file_path: str = "table.xlsx"):
+    wb = CalamineWorkbook.from_path(file_path)
     ws = wb.get_sheet_by_name(GRADE)
     return ws.to_python()
 

@@ -79,7 +79,10 @@ async def main():
     raw_data = await asyncio.to_thread(get_raw_data)
     schedule = WeekParsing(raw_data)
     valids = schedule.parse_table_week()
-    print(valids)
+
+    
+           
+
 
 
 if __name__ == "__main__":

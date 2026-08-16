@@ -9,8 +9,9 @@ load_dotenv()
 DOCUMENT_URL: str = os.getenv("TABLE_LINK", "")
 
 class YandexDiskParsing:
-    def __init__(self, public_key: str):
+    def __init__(self, public_key: str, file_path: str = "table.xlsx"):
         self.public_key = public_key
+        self.file_path = file_path
         self.base_url = "https://cloud-api.yandex.net/v1/disk/public/resources/download"
         self.meta_url = "https://cloud-api.yandex.net/v1/disk/public/resources"
         self.last_hash: str | None = None
@@ -30,7 +31,7 @@ class YandexDiskParsing:
 
                 async with session.get(file_link) as file:
                     content = await file.read()
-                    with open("table.xlsx", "wb") as f:
+                    with open(self.file_path, "wb") as f:
                         f.write(content)
                         return "Данные успешно записаны в файл"
             return "Ошибка API"

@@ -16,8 +16,7 @@ async def cmd_help(message: Message) -> None:
     content = Text(
         CustomEmoji(fallback, custom_emoji_id=emoji_id),
         " Что я умею:\n\n"
-        "📅 Сегодня — расписание на сегодня\n"
-        "🗓 Неделя — расписание на всю неделю\n"
-        "⭐ Premium — скоро",
+        "/day — расписание на сегодня\n"
+        "/week — расписание на всю неделю",
     )
     await message.answer(**content.as_kwargs(), reply_markup=main_keyboard)

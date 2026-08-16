@@ -12,4 +12,5 @@ class LastInfo(BaseModels):
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id = mapped_column(BigInteger)
     chat_id: Mapped[int] = mapped_column()
-    last_schedule: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True) 
+    table_link: Mapped[str | None] = mapped_column(nullable=True)
+    last_schedule: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
