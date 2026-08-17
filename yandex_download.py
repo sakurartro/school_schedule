@@ -9,7 +9,7 @@ load_dotenv()
 DOCUMENT_URL: str = os.getenv("TABLE_LINK", "")
 
 class YandexDiskParsing:
-    def __init__(self, public_key: str, file_path: str = "table.xlsx"):
+    def __init__(self, public_key: str, file_path: str = "tables/table.xlsx"):
         self.public_key = public_key
         self.file_path = file_path
         self.base_url = "https://cloud-api.yandex.net/v1/disk/public/resources/download"

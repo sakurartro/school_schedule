@@ -6,8 +6,9 @@ import os
 load_dotenv()
 
 TOKEN: str = os.getenv("TG_API_KEY", "")
+TG_PROXY: str = os.getenv("TG_PROXY", "")
 
-session = AiohttpSession(proxy="socks5://127.0.0.1:1080")
+session = AiohttpSession(proxy=TG_PROXY) if TG_PROXY else AiohttpSession()
 bot = Bot(token=TOKEN, session=session)
 
 dp = Dispatcher()

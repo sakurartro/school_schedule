@@ -5,9 +5,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.formatting import CustomEmoji, Text
 from aiogram.enums import ParseMode
+from yandex_download import YandexDiskParsing
 
 from config import SCHOOL_EMOJI
-from tg.keyboard import main_keyboard, disclaimer_kb
+from tg.keyboard import main_keyboard, disclaimer_kb, grades_kb
+from table_to_python import FileWork
 from service import get_data_id, add_user_link
 
 router = Router()
@@ -58,15 +60,44 @@ async def accept_disclaimer(callback: CallbackQuery, state: FSMContext) -> None:
 
 
 @router.message(Registration.waiting_for_link)
-async def save_table_link(message: Message, state: FSMContext) -> None:
+async def grade_ask(message: Message, state: FSMContext) -> None:
     table_link = (message.text or "").strip()
     if not table_link.startswith("http"):
         await message.answer("Это не похоже на ссылку. Пришли ссылку на таблицу на Яндекс.Диске")
         return None
+    yandex = YandexDiskParsing(table_link)
 
-    await add_user_link(chatid=message.chat.id, tg_id=message.from_user.id, table_link=table_link)
+    await yandex.download_data()
+
+    calamaine = FileWork("tables/table.xlsx")
+
+    grades = calamaine.get_all_sheets()
+
+    await message.answer("Выбери класс", reply_markup=await grades_kb(grades))
+    await state.update_data(link=table_link)
+    
+
+
+@router.callback_query(F.data.startswith("grade_"))
+async def set_data(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    data = await state.get_data()
+    link = data.get("link", "")
+    callback_text = callback.data
+    grade = callback_text.strip().split("grade_")[-1]
+    await add_user_link(chatid=callback.message.chat.id, tg_id=callback.from_user.id, table_link=link, grade=grade)
+    
+    emoji_id, fallback = SCHOOL_EMOJI["school_building_small"]
+    content = Text(
+        CustomEmoji(fallback, custom_emoji_id=emoji_id),
+        f" Привет, {callback.from_user.first_name}!\n\n"
+        "Я показываю расписание уроков.\n"
+        "/today — расписание на сегодня\n"
+        "/week — расписание на всю неделю\n\n"
+        "Загляни в меню снизу 👇",
+    )
+    await callback.message.answer(**content.as_kwargs(), reply_markup=main_keyboard)
     await state.clear()
-    await send_welcome(message)
 
 
 @router.callback_query(F.data == "support")
@@ -77,7 +108,7 @@ async def donation_page(callback: CallbackQuery) -> None:
     <tg-emoji emoji-id=\"5350427449970679463\">✈️</tg-emoji> Telegram: @ayeshaio1337
     <tg-emoji emoji-id=\"5346181118884331907\">📱</tg-emoji> Github: <code>github.com/sakurartro/school_schedule</code>
     ---------------------------------------------------------
-    Донат\n
+    <tg-emoji emoji-id=\"5350641884802870510\">💲</tg-emoji>Донат\n
     <tg-emoji emoji-id=\"5350641884802870510\">💲</tg-emoji> Рубли: <code>2202208527289756</code>
     <tg-emoji emoji-id=\"5296742257146241213\">💎</tg-emoji> GRAM:  <code>UQDaKwq6d0atM7efEfuTuvdAJdc-C6r5ZSn0N8MY6LPQ2dIY</code>\n
     """

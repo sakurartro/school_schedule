@@ -1,4 +1,4 @@
-from table_to_python import get_raw_data
+
 from dataclasses import dataclass
 import asyncio
 
@@ -73,19 +73,3 @@ class WeekParsing:
         return all_days
 
 
-    
-
-async def main():
-    raw_data = await asyncio.to_thread(get_raw_data)
-    schedule = WeekParsing(raw_data)
-    valids = schedule.parse_table_week()
-
-    
-           
-
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
-    

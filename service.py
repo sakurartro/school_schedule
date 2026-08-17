@@ -19,14 +19,14 @@ async def add_data(chatid: int, tg_id: int, schedule: list[DaySchedule]) -> None
         await session.commit()
 
 
-async def add_user_link(chatid: int, tg_id: int, table_link: str) -> None:
+async def add_user_link(chatid: int, tg_id: int, table_link: str, grade: str) -> None:
     async with async_session() as session:
         result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
         if result:
             result.table_link = table_link
             await session.commit()
             return None
-        new_data = LastInfo(tg_id=tg_id, chat_id=chatid, table_link=table_link)
+        new_data = LastInfo(tg_id=tg_id, chat_id=chatid, table_link=table_link, grade=grade)
         session.add(new_data)
         await session.commit()
 
