@@ -26,6 +26,15 @@ async def grades_kb(grades: list):
     return builder.adjust(2).as_markup()
 
 
+async def grades2_kb(grades: list):
+    builder = InlineKeyboardBuilder()
+
+    for grade in grades:
+        builder.add(InlineKeyboardButton(text=grade, callback_data=f"grade2_{grade}"))
+
+    return builder.adjust(2).as_markup()
+
+
 async def disclaimer_kb():
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="Понимаю и принимаю", callback_data="accept_disclaimer"))

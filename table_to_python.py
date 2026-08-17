@@ -1,23 +1,30 @@
-from python_calamine import CalamineWorkbook, WorksheetNotFound
+from python_calamine import CalamineWorkbook
 import asyncio
 import os
 from dotenv import load_dotenv
+from service import get_grade_id
 
 load_dotenv()
 
-GRADE: str = os.getenv("DEFAULT_GRADE", "8 класс")
-
 
 class FileWork:
-    def __init__(self, file_path: str) -> None:
+    def __init__(self, file_path: str, tg_id: int) -> None:
         self.file_path = file_path
+        self.tg_id = tg_id
 
     def get_raw_data(self) -> list | None:
-        wb = CalamineWorkbook.from_path(self.file_path)
-        try:
-            ws = wb.get_sheet_by_name(GRADE)
-        except WorksheetNotFound:
+        GRADE = asyncio.run(get_grade_id(self.tg_id))
+        if GRADE is None:
             return None
+        wb = CalamineWorkbook.from_path(self.file_path)
+        sheet_name = next(
+            (name for name in wb.sheet_names if name.strip() == GRADE.strip()),
+            None,
+        )
+        if sheet_name is None:
+            print("crash")
+            return None
+        ws = wb.get_sheet_by_name(sheet_name)
         return ws.to_python()
 
     def get_all_sheets(self):

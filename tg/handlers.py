@@ -1,6 +1,6 @@
 from aiogram.types import Message, CallbackQuery
 from aiogram import Router, F
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.formatting import CustomEmoji, Text
@@ -8,9 +8,9 @@ from aiogram.enums import ParseMode
 from yandex_download import YandexDiskParsing
 
 from config import SCHOOL_EMOJI
-from tg.keyboard import main_keyboard, disclaimer_kb, grades_kb
+from tg.keyboard import main_keyboard, disclaimer_kb, grades_kb, grades2_kb
 from table_to_python import FileWork
-from service import get_data_id, add_user_link
+from service import get_data_id, add_user_link, change_grade
 
 router = Router()
 
@@ -65,16 +65,17 @@ async def grade_ask(message: Message, state: FSMContext) -> None:
     if not table_link.startswith("http"):
         await message.answer("Это не похоже на ссылку. Пришли ссылку на таблицу на Яндекс.Диске")
         return None
-    yandex = YandexDiskParsing(table_link)
+    file_path = f"tables/{message.from_user.id}.xlsx"
+    yandex = YandexDiskParsing(table_link, file_path=file_path)
 
     await yandex.download_data()
 
-    calamaine = FileWork("tables/table.xlsx")
+    calamaine = FileWork(file_path, message.from_user.id)
 
     grades = calamaine.get_all_sheets()
 
     await message.answer("Выбери класс", reply_markup=await grades_kb(grades))
-    await state.update_data(link=table_link)
+    await state.update_data(link=table_link, path=file_path)
     
 
 
@@ -83,9 +84,10 @@ async def set_data(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     data = await state.get_data()
     link = data.get("link", "")
+    path = data.get("path", "")
     callback_text = callback.data
     grade = callback_text.strip().split("grade_")[-1]
-    await add_user_link(chatid=callback.message.chat.id, tg_id=callback.from_user.id, table_link=link, grade=grade)
+    await add_user_link(chatid=callback.message.chat.id, tg_id=callback.from_user.id, table_link=link, grade=grade, file_path=path)
     
     emoji_id, fallback = SCHOOL_EMOJI["school_building_small"]
     content = Text(
@@ -114,3 +116,27 @@ async def donation_page(callback: CallbackQuery) -> None:
     """
     await callback.message.answer(text, parse_mode=ParseMode.HTML)
 
+
+@router.message(Command("change_grade"))
+async def change_grade_command(message: Message):
+    tg_id = message.from_user.id
+    data = await get_data_id(tg_id)
+    if data is None:
+        await message.answer("Ошибка базы данных")
+        return
+    
+    calamine = FileWork(data.file_path, tg_id)
+
+    grades = calamine.get_all_sheets()
+
+    await message.answer("Выберите новый класс: ", reply_markup=await grades2_kb(grades))
+
+
+
+@router.callback_query(F.data.startswith("grade2_"))
+async def update_grade(callback: CallbackQuery):
+    await callback.answer()
+    data = callback.data
+    new_grade = data.strip().split("grade2_")[-1]
+    await change_grade(callback.from_user.id, new_grade)
+    await callback.message.answer(f"Класс успешно сменён на: {new_grade}")
