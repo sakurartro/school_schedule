@@ -5,12 +5,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.formatting import CustomEmoji, Text
 from aiogram.enums import ParseMode
+from tg.user_handlers import Redirict
 from yandex_download import YandexDiskParsing
 
 from config import SCHOOL_EMOJI
 from tg.keyboard import main_keyboard, disclaimer_kb, grades_kb, grades2_kb
 from table_to_python import FileWork
-from service import get_data_id, add_user_link, change_grade
+from service import get_data_id, add_user_link, change_grade, change_table_url
 
 router = Router()
 
@@ -19,34 +20,70 @@ class Registration(StatesGroup):
     waiting_for_link = State()
 
 
-async def send_welcome(message: Message) -> None:
+async def send_welcome(event: Message | CallbackQuery) -> None:
     emoji_id, fallback = SCHOOL_EMOJI["school_building_small"]
-    content = Text(
-        CustomEmoji(fallback, custom_emoji_id=emoji_id),
-        f" Привет, {message.from_user.first_name}!\n\n"
-        "Я показываю расписание уроков.\n"
-        "/today — расписание на сегодня\n"
-        "/week — расписание на всю неделю\n\n"
-        "Загляни в меню снизу 👇",
-    )
-    await message.answer(**content.as_kwargs(), reply_markup=main_keyboard)
+    if isinstance(event, Message):
+        message = event
+        content = Text(
+            CustomEmoji(fallback, custom_emoji_id=emoji_id),
+            f" Привет, {message.from_user.first_name}!\n\n"
+            "Я показываю расписание уроков.\n"
+            "/today — расписание на сегодня\n"
+            "/week — расписание на всю неделю\n"
+            "/change_grade - сменить отслеживаемый класс\n"
+            "/change_schedule - сменить отслеживаемое расписание\n\n"
+            "Загляни в меню снизу 👇",
+        )
+        await message.answer(**content.as_kwargs(), reply_markup=main_keyboard)
+    elif isinstance(event, CallbackQuery):
+        await event.answer()
+        content = Text(
+            CustomEmoji(fallback, custom_emoji_id=emoji_id),
+            f" Привет, {event.from_user.first_name}!\n\n"
+            "Я показываю расписание уроков.\n"
+            "/today — расписание на сегодня\n"
+            "/week — расписание на всю неделю\n"
+            "/change_grade - сменить отслеживаемый класс\n"
+            "/change_schedule - сменить отслеживаемое расписание\n\n"
+            "Загляни в меню снизу 👇",
+        )
+        await event.message.answer(**content.as_kwargs(), reply_markup=main_keyboard)
 
-
+@router.callback_query(F.data == "no")
 @router.message(CommandStart())
-async def cmd_start(message: Message) -> None:
-    user = await get_data_id(message.from_user.id)
-    if user and user.table_link:
-        await send_welcome(message)
-        return None
+@router.message(Redirict.redirict)
+async def cmd_start(event: Message | CallbackQuery, state: FSMContext) -> None:
+    if isinstance(event, Message):
+        message = event
+        user = await get_data_id(message.from_user.id)
+        if user and user.table_link:
+            await send_welcome(message)
+            return None
 
-    await message.answer(
-        "⚠️ Перед началом работы:\n\n"
-        "Расписание берётся из таблицы, которую пришлёшь ты сам. "
-        "Я не проверяю её актуальность и корректность — если расписание окажется "
-        "неверным или устаревшим, ответственность за это несёшь ты, а не бот.\n\n"
-        "Нажимая кнопку ниже, ты подтверждаешь, что понимаешь это.",
-        reply_markup=await disclaimer_kb(),
-    )
+        await message.answer(
+            "⚠️ Перед началом работы:\n\n"
+            "Расписание берётся из таблицы, которую пришлёшь ты сам. "
+            "Я не проверяю её актуальность и корректность — если расписание окажется "
+            "неверным или устаревшим, ответственность за это несёшь ты, а не бот.\n\n"
+            "Нажимая кнопку ниже, ты подтверждаешь, что понимаешь это.",
+            reply_markup=await disclaimer_kb(),
+        )
+    elif isinstance(event, CallbackQuery):
+        await event.answer()
+        user = await get_data_id(event.from_user.id)
+        if user and user.table_link:
+            await send_welcome(event)
+            return None
+
+        await event.message.answer(
+            "⚠️ Перед началом работы:\n\n"
+            "Расписание берётся из таблицы, которую пришлёшь ты сам. "
+            "Я не проверяю её актуальность и корректность — если расписание окажется "
+            "неверным или устаревшим, ответственность за это несёшь ты, а не бот.\n\n"
+            "Нажимая кнопку ниже, ты подтверждаешь, что понимаешь это.",
+            reply_markup=await disclaimer_kb(),
+        )
+    await state.clear()
 
 
 @router.callback_query(F.data == "accept_disclaimer")
@@ -94,27 +131,14 @@ async def set_data(callback: CallbackQuery, state: FSMContext):
         CustomEmoji(fallback, custom_emoji_id=emoji_id),
         f" Привет, {callback.from_user.first_name}!\n\n"
         "Я показываю расписание уроков.\n"
-        "/today — расписание на сегодня\n"
-        "/week — расписание на всю неделю\n\n"
+        "/today - расписание на сегодня\n"
+        "/week - расписание на всю неделю\n"
+        "/change_grade - сменить отслеживаемый класс\n"
+        "/change_schedule - сменить отслеживаемое расписание\n\n"
         "Загляни в меню снизу 👇",
     )
     await callback.message.answer(**content.as_kwargs(), reply_markup=main_keyboard)
     await state.clear()
-
-
-@router.callback_query(F.data == "support")
-async def donation_page(callback: CallbackQuery) -> None:
-    await callback.answer()
-    text = f"""
-    <tg-emoji emoji-id=\"5350781673103453057\">🔐</tg-emoji>Поддержка\n
-    <tg-emoji emoji-id=\"5350427449970679463\">✈️</tg-emoji> Telegram: @ayeshaio1337
-    <tg-emoji emoji-id=\"5346181118884331907\">📱</tg-emoji> Github: <code>github.com/sakurartro/school_schedule</code>
-    ---------------------------------------------------------
-    <tg-emoji emoji-id=\"5350641884802870510\">💲</tg-emoji>Донат\n
-    <tg-emoji emoji-id=\"5350641884802870510\">💲</tg-emoji> Рубли: <code>2202208527289756</code>
-    <tg-emoji emoji-id=\"5296742257146241213\">💎</tg-emoji> GRAM:  <code>UQDaKwq6d0atM7efEfuTuvdAJdc-C6r5ZSn0N8MY6LPQ2dIY</code>\n
-    """
-    await callback.message.answer(text, parse_mode=ParseMode.HTML)
 
 
 @router.message(Command("change_grade"))
@@ -140,3 +164,19 @@ async def update_grade(callback: CallbackQuery):
     new_grade = data.strip().split("grade2_")[-1]
     await change_grade(callback.from_user.id, new_grade)
     await callback.message.answer(f"Класс успешно сменён на: {new_grade}")
+
+
+@router.message(Command("change_schedule"))
+async def change_table_url_cmd(message: Message, state: FSMContext) -> None:
+    await message.answer("Пришли новую ссылку на публичную таблицу с расписанием на Яндекс.Диске, " "чтобы я мог показывать твоё расписание.")
+    await state.set_state(Registration.waiting_for_link)
+
+
+@router.message(Command("cancel"))
+async def cmd_cancel(message: Message, state: FSMContext) -> None:
+    current_state = await state.get_state()
+    if current_state is None:
+        await message.answer("Нечего отменять")
+        return None
+    await state.clear()
+    await message.answer("Действие отменено")

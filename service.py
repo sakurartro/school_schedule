@@ -58,10 +58,27 @@ async def get_grade_id(tg_id: int):
             return result.grade
 
 
-async def change_grade(tg_id: int, grade: str):
+async def change_grade(tg_id: int, grade: str) -> None:
     async with async_session() as session:
         result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
         if result:
             result.grade = grade
             await session.commit()
             return
+
+
+async def change_table_url(tg_id: int, link: str) -> None:
+    async with async_session() as session:
+        result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
+        if result:
+            result.table_link = link
+            await session.commit()
+            return
+
+
+async def delete_profile(tg_id: int) -> None:
+    async with async_session() as session:
+        result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
+        if result:
+            await session.delete(result)
+            await session.commit()

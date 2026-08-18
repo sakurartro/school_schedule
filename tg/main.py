@@ -7,6 +7,7 @@ from tg.handlers import router
 from tg.help_handlers import router as help_router
 from tg.schedule_handlers import router as schedule_router
 from tg.schedule_notifier import scheduler
+from tg.user_handlers import router as user_router
 from connection import engine, async_session
 from models import BaseModels
 
@@ -22,6 +23,7 @@ async def main():
     dp.include_router(router)
     dp.include_router(help_router)
     dp.include_router(schedule_router)
+    dp.include_router(user_router)
     scheduler.start()
     async with engine.begin() as conn:
         await conn.run_sync(BaseModels.metadata.create_all)

@@ -41,11 +41,19 @@ async def disclaimer_kb():
     return builder.adjust(1).as_markup()
 
 
-async def info_kb():
+async def info_kb(is_sh: bool = False):
     builder = InlineKeyboardBuilder()
     utc_plus_seven = timezone(timedelta(hours=7))
     time_now = datetime.now(tz=utc_plus_seven)
     time_now = time_now.strftime("%H:%M")
-    builder.add(InlineKeyboardButton(text=f"Обновлено: {time_now}", callback_data="time"))
+    if is_sh:
+        builder.add(InlineKeyboardButton(text=f"Обновлено: {time_now}", callback_data="time"))
     builder.add(InlineKeyboardButton(text="Поддержка", callback_data="support"))
     return builder.adjust(1).as_markup()
+
+
+async def delete_kb():
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="Да", callback_data="yes"))
+    builder.add(InlineKeyboardButton(text="Нет", callback_data="no"))
+    return builder.adjust(2).as_markup()

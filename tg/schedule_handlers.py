@@ -34,7 +34,7 @@ async def sent_schedule_week(message: Message) -> None:
                 schedule_table_week(schedule),
             ]
         )
-        await message.answer_rich(rich_msg, reply_markup=await kb.info_kb())
+        await message.answer_rich(rich_msg, reply_markup=await kb.info_kb(True))
 
 
 @router.message(Command("today"))
@@ -75,7 +75,7 @@ async def sent_schedule_today(message: Message, state: FSMContext) -> None:
             schedule_table_week([schedule]),
         ]
     )
-    await message.answer_rich(rich_message=rich_msg, reply_markup=await kb.info_kb())
+    await message.answer_rich(rich_message=rich_msg, reply_markup=await kb.info_kb(True))
     await add_data(
         chatid=message.chat.id, tg_id=message.from_user.id, schedule=week_schedule
     )
