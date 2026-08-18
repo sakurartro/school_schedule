@@ -22,7 +22,6 @@ class FileWork:
             None,
         )
         if sheet_name is None:
-            print("crash")
             return None
         ws = wb.get_sheet_by_name(sheet_name)
         return ws.to_python()

@@ -3,6 +3,7 @@ from data_content import WeekParsing, DaySchedule
 import asyncio
 import os
 from table_to_python import FileWork
+from ai.ai_service import parse_schedule_ai
 
 TABLES_DIR = "tables"
 os.makedirs(TABLES_DIR, exist_ok=True)
@@ -22,10 +23,10 @@ async def get_latest_schedule_week(tg_id: int, table_link: str, ai: bool = False
     
     schedule: WeekParsing = WeekParsing(raw_data)
 
-    latest_schedule: list = schedule.parse_table_week()
+    latest_schedule: list[DaySchedule] | None = schedule.parse_table_week()
 
     if latest_schedule == []:
-        ...
+        latest_schedule = await parse_schedule_ai(raw_data)
 
     return latest_schedule
 
