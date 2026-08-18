@@ -5,7 +5,8 @@ import asyncio
 import logging
 from tg.handlers import router
 from tg.help_handlers import router as help_router
-from tg.schedule_handlers import router as schedule_router, scheduler
+from tg.schedule_handlers import router as schedule_router
+from tg.schedule_notifier import scheduler
 from connection import engine, async_session
 from models import BaseModels
 

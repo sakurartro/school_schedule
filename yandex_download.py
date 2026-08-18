@@ -1,12 +1,5 @@
-from dotenv import load_dotenv
-import os
 import aiohttp
 import asyncio
-
-
-load_dotenv()
-
-DOCUMENT_URL: str = os.getenv("TABLE_LINK", "")
 
 class YandexDiskParsing:
     def __init__(self, public_key: str, file_path: str = "tables/table.xlsx"):
@@ -52,19 +45,3 @@ class YandexDiskParsing:
                     return True
         return False
 
-
-
-
-async def main():
-    yandex_disk = YandexDiskParsing(public_key=DOCUMENT_URL)
-
-    response = await yandex_disk.update_data()
-
-    print(response)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-        
-
-        
