@@ -1,17 +1,19 @@
+from datetime import datetime
+
 from aiogram.types import (
     InputRichBlockSectionHeading,
     InputRichBlockTable,
     RichBlockTableCell,
     RichTextCustomEmoji,
 )
-from aiogram import F
-from data_content import weekdays
-from datetime import datetime
+
 from config import SCHOOL_EMOJI
+from data_content import DaySchedule, weekdays
+from tg.keyboard import SCHOOL_TZ
 
 
-def schedule_table_week(days_lessons: list) -> InputRichBlockTable:
-    today = weekdays[datetime.now().weekday()]
+def schedule_table_week(days_lessons: list[DaySchedule]) -> InputRichBlockTable:
+    today = weekdays[datetime.now(tz=SCHOOL_TZ).weekday()]
 
     day_names_row = []
     header_row = []
@@ -71,4 +73,3 @@ def emoji_heading(
         ],
         size=size,
     )
-

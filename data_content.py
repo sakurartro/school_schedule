@@ -1,6 +1,4 @@
-
 from dataclasses import dataclass
-import asyncio
 
 weekdays: list = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
 
@@ -18,8 +16,16 @@ class DaySchedule:
     lessons: list[Lesson]
 
 
+def clean_cell(value) -> str:
+    """Ячейка в читаемый вид: числа без .0, без неразрывных пробелов, пустое — прочерк."""
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    text = str(value).replace("\xa0", "").strip() if value else ""
+    return text or "-"
+
+
 def find_day(days: list[DaySchedule], weekday_index: int) -> DaySchedule | None:
-    name = weekdays[weekday_index]
+    name = weekdays[weekday_index % len(weekdays)]
     for day in days:
         if day.weekday == name:
             return day
@@ -27,7 +33,7 @@ def find_day(days: list[DaySchedule], weekday_index: int) -> DaySchedule | None:
 
 
 def find_day_dict(days: list[dict], weekday_index: int) -> dict | None:
-    name = weekdays[weekday_index]
+    name = weekdays[weekday_index % len(weekdays)]
     for day in days:
         if day.get("weekday") == name:
             return day
@@ -36,7 +42,6 @@ def find_day_dict(days: list[dict], weekday_index: int) -> dict | None:
 
 class WeekParsing:
     def __init__(self, raw_data: list[list]):
-        self.schedule: list[DaySchedule]
         self.raw_data = raw_data
 
     def __str__(self) -> str:
@@ -64,22 +69,12 @@ class WeekParsing:
                 current_day = first_cell
 
             if current_day and len(row) > time_col + 2:
-                time_row = row[time_col]
-                lesson_row = row[time_col + 1]
-                cabinet_row = row[time_col + 2]
-                if isinstance(cabinet_row, float):
-                    cabinet_row = int(cabinet_row)
-                time_value = str(time_row).replace("\xa0", "").strip() if time_row else "-"
-                lesson = str(lesson_row).replace("\xa0", "").strip() if lesson_row else "-"
-                cabinet = str(cabinet_row).replace("\xa0", "").strip() if cabinet_row else "-"
                 lesson_obj = Lesson(
-                    cabinet=cabinet,
-                    lesson=lesson,
-                    time=time_value
+                    cabinet=clean_cell(row[time_col + 2]),
+                    lesson=clean_cell(row[time_col + 1]),
+                    time=clean_cell(row[time_col]),
                 )
                 current_lessons.append(lesson_obj)
         if current_day:
             all_days.append(DaySchedule(weekday=current_day, lessons=current_lessons))
         return all_days
-
-
