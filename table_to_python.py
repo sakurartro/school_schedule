@@ -1,5 +1,7 @@
 from python_calamine import CalamineWorkbook
 
+from data_content import find_class_letters
+
 
 class FileWork:
     def __init__(self, file_path: str) -> None:
@@ -29,3 +31,10 @@ class FileWork:
         if wb is None:
             return []
         return wb.sheet_names
+
+    def get_class_letters(self, grade: str) -> list[str]:
+        """Литеры (А/Б/В...), на которые внутри листа `grade` разбиты колонки."""
+        raw_data = self.get_raw_data(grade)
+        if raw_data is None:
+            return []
+        return list(find_class_letters(raw_data))

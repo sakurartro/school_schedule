@@ -22,7 +22,9 @@ scheduler = AsyncIOScheduler()
 
 
 async def notify_user(bot: Bot, data, weekday: int) -> None:
-    week_schedule = await get_latest_schedule_week(data.tg_id, data.table_link, data.grade)
+    week_schedule = await get_latest_schedule_week(
+        data.tg_id, data.table_link, data.grade, data.class_letter
+    )
     if not week_schedule:
         return None
 

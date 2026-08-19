@@ -37,7 +37,13 @@ LOAD_ERROR = (
 
 NO_SHEETS = "⚠️ В таблице нет ни одного листа с классом. Пришли другую ссылку"
 
-STALE_GRADES = "⚠️ Список классов устарел, вызови команду ещё раз"
+STALE_GRADES = "⚠️ Список устарел, вызови команду ещё раз"
+
+CHOOSE_LETTER = "В этом классе несколько параллелей. Выбери свою букву:"
+
+
+def grade_label(grade: str, letter: str | None) -> str:
+    return f"{grade} ({letter})" if letter else grade
 
 
 def welcome_content(name: str) -> Text:

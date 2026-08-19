@@ -26,7 +26,7 @@ async def load_week(message: Message):
     await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
 
     week_schedule = await get_latest_schedule_week(
-        message.from_user.id, user.table_link, user.grade
+        message.from_user.id, user.table_link, user.grade, user.class_letter
     )
     if not week_schedule:
         await message.answer(LOAD_ERROR)

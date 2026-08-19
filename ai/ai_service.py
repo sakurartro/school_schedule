@@ -18,11 +18,11 @@ def get_client() -> genai.Client:
     return genai.Client()
 
 
-async def parse_schedule_ai(raw_data: list) -> list[DaySchedule] | None:
+async def parse_schedule_ai(raw_data: list, class_letter: str | None = None) -> list[DaySchedule] | None:
     try:
         response = await get_client().aio.models.generate_content(
             model="gemini-3.1-flash-lite",
-            contents=ai.prompts.schedule_parse(raw_data),
+            contents=ai.prompts.schedule_parse(raw_data, class_letter),
         )
     except Exception as e:
         logger.warning("Не удалось разобрать расписание через ИИ: %s", e)

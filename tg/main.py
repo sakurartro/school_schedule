@@ -4,7 +4,8 @@ import logging
 from aiogram.types import BotCommand
 
 from connection import engine
-from models import BaseModels
+from models import ensure_schema
+from tg.admin_handlers import router as admin_router
 from tg.handlers import router
 from tg.help_handlers import router as help_router
 from tg.schedule_handlers import router as schedule_router
@@ -27,12 +28,13 @@ BOT_COMMANDS = [
 
 async def main():
     dp.include_router(router)
+    dp.include_router(admin_router)
     dp.include_router(help_router)
     dp.include_router(schedule_router)
-    dp.include_router(user_router)
+    dp.include_router(user_router)  # catch-all внутри — должен идти последним
 
     async with engine.begin() as conn:
-        await conn.run_sync(BaseModels.metadata.create_all)
+        await ensure_schema(conn)
 
     scheduler.start()
     await bot.set_my_commands(BOT_COMMANDS)

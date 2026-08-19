@@ -44,6 +44,16 @@ async def grades_kb(grades: list[str], prefix: str = "grade") -> InlineKeyboardM
     return builder.adjust(2).as_markup()
 
 
+async def letters_kb(letters: list[str], prefix: str = "letter") -> InlineKeyboardMarkup:
+    """Буква класса умещается в callback_data целиком — индекс тут не нужен."""
+    builder = InlineKeyboardBuilder()
+
+    for letter in letters:
+        builder.add(InlineKeyboardButton(text=letter, callback_data=f"{prefix}_{letter}"))
+
+    return builder.adjust(4).as_markup()
+
+
 async def disclaimer_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="Понимаю и принимаю", callback_data="accept_disclaimer"))

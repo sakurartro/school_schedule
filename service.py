@@ -19,13 +19,21 @@ async def save_schedule(chatid: int, tg_id: int, schedule: list[DaySchedule]) ->
         await session.commit()
 
 
-async def add_user_link(chatid: int, tg_id: int, table_link: str, grade: str, file_path: str) -> None:
+async def add_user_link(
+    chatid: int,
+    tg_id: int,
+    table_link: str,
+    grade: str,
+    file_path: str,
+    class_letter: str | None = None,
+) -> None:
     async with async_session() as session:
         result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
         if result:
             result.chat_id = chatid
             result.table_link = table_link
             result.grade = grade
+            result.class_letter = class_letter
             result.file_path = file_path
             result.last_schedule = None
         else:
@@ -35,6 +43,7 @@ async def add_user_link(chatid: int, tg_id: int, table_link: str, grade: str, fi
                     chat_id=chatid,
                     table_link=table_link,
                     grade=grade,
+                    class_letter=class_letter,
                     file_path=file_path,
                 )
             )
@@ -52,11 +61,12 @@ async def get_all_data() -> list[LastInfo]:
         return list(result)
 
 
-async def change_grade(tg_id: int, grade: str) -> None:
+async def change_grade(tg_id: int, grade: str, class_letter: str | None = None) -> None:
     async with async_session() as session:
         result = await session.scalar(select(LastInfo).where(LastInfo.tg_id == tg_id))
         if result:
             result.grade = grade
+            result.class_letter = class_letter
             result.last_schedule = None
             await session.commit()
 

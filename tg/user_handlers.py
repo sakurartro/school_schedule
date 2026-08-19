@@ -10,7 +10,7 @@ from aiogram.types import CallbackQuery, LinkPreviewOptions, Message
 import tg.keyboard as kb
 from service import delete_profile, get_data_id
 from tg.keyboard import BTN_PROFILE
-from tg.texts import NO_PROFILE
+from tg.texts import NO_PROFILE, grade_label
 
 router = Router()
 
@@ -31,7 +31,7 @@ async def show_profile(message: Message) -> None:
         f'<tg-emoji emoji-id="5350781673103453057">🔐</tg-emoji> Профиль — '
         f"{escape(message.from_user.first_name)}\n"
         f'<tg-emoji emoji-id="5350809912513424561">🔊</tg-emoji> Класс — '
-        f"{escape(data.grade or '—')}\n"
+        f"{escape(grade_label(data.grade, data.class_letter) if data.grade else '—')}\n"
         f'<tg-emoji emoji-id="5271604874419647061">🔗</tg-emoji> Расписание — '
         f"<a href=\"{escape(data.table_link, quote=True)}\">таблица</a>\n\n"
         f'<tg-emoji emoji-id="5420323339723881652">⚠️</tg-emoji> '

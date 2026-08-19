@@ -10,15 +10,17 @@ from aiogram.types import CallbackQuery, Message
 from client import table_path
 from service import add_user_link, change_grade, get_data_id
 from table_to_python import FileWork
-from tg.keyboard import disclaimer_kb, grades_kb, main_keyboard
+from tg.keyboard import disclaimer_kb, grades_kb, letters_kb, main_keyboard
 from tg.texts import (
     ASK_LINK,
     BAD_LINK,
+    CHOOSE_LETTER,
     DISCLAIMER,
     DOWNLOAD_ERROR,
     NO_PROFILE,
     NO_SHEETS,
     STALE_GRADES,
+    grade_label,
     welcome_content,
 )
 from tg.user_handlers import Redirict
@@ -102,6 +104,22 @@ async def grade_ask(message: Message, state: FSMContext) -> None:
     await status.edit_text("Выбери свой класс:", reply_markup=await grades_kb(grades))
 
 
+async def finish_registration(
+    callback: CallbackQuery, state: FSMContext, link: str, file_path: str, grade: str, letter: str | None
+) -> None:
+    await add_user_link(
+        chatid=callback.message.chat.id,
+        tg_id=callback.from_user.id,
+        table_link=link,
+        grade=grade,
+        class_letter=letter,
+        file_path=file_path,
+    )
+    await state.clear()
+    await callback.message.edit_text(f"✅ Класс выбран: {grade_label(grade, letter)}")
+    await send_welcome(callback.message, callback.from_user.first_name)
+
+
 @router.callback_query(F.data.startswith("grade_"))
 async def set_data(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer()
@@ -112,17 +130,30 @@ async def set_data(callback: CallbackQuery, state: FSMContext) -> None:
         await state.clear()
         return None
 
-    await add_user_link(
-        chatid=callback.message.chat.id,
-        tg_id=callback.from_user.id,
-        table_link=data.get("link", ""),
-        grade=grade,
-        file_path=data.get("path", ""),
-    )
-    await state.clear()
+    file_path = data.get("path", "")
+    letters = await asyncio.to_thread(FileWork(file_path).get_class_letters, grade)
+    if len(letters) <= 1:
+        await finish_registration(
+            callback, state, data.get("link", ""), file_path, grade, letters[0] if letters else None
+        )
+        return None
 
-    await callback.message.edit_text(f"✅ Класс выбран: {grade}")
-    await send_welcome(callback.message, callback.from_user.first_name)
+    await state.update_data(grade=grade, letters=letters)
+    await callback.message.edit_text(CHOOSE_LETTER, reply_markup=await letters_kb(letters))
+
+
+@router.callback_query(F.data.startswith("letter_"))
+async def set_letter(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
+    data = await state.get_data()
+    letter = (callback.data or "").removeprefix("letter_")
+    grade = data.get("grade")
+    if not grade or letter not in data.get("letters", []):
+        await callback.message.answer(STALE_GRADES)
+        await state.clear()
+        return None
+
+    await finish_registration(callback, state, data.get("link", ""), data.get("path", ""), grade, letter)
 
 
 async def ask_new_grade(message: Message, tg_id: int, state: FSMContext) -> None:
@@ -140,7 +171,7 @@ async def ask_new_grade(message: Message, tg_id: int, state: FSMContext) -> None
         await message.answer("⚠️ Не удалось прочитать таблицу. Попробуй сменить её — /change_schedule")
         return None
 
-    await state.update_data(grades=grades)
+    await state.update_data(grades=grades, path=file_path)
     await message.answer("Выбери новый класс:", reply_markup=await grades_kb(grades, prefix="grade2"))
 
 
@@ -155,6 +186,12 @@ async def change_grade_callback(callback: CallbackQuery, state: FSMContext) -> N
     await ask_new_grade(callback.message, callback.from_user.id, state)
 
 
+async def finish_grade_change(callback: CallbackQuery, state: FSMContext, grade: str, letter: str | None) -> None:
+    await change_grade(callback.from_user.id, grade, letter)
+    await state.clear()
+    await callback.message.edit_text(f"✅ Класс успешно сменён на: {grade_label(grade, letter)}")
+
+
 @router.callback_query(F.data.startswith("grade2_"))
 async def update_grade(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer()
@@ -164,8 +201,27 @@ async def update_grade(callback: CallbackQuery, state: FSMContext) -> None:
         await callback.message.answer(STALE_GRADES)
         return None
 
-    await change_grade(callback.from_user.id, grade)
-    await callback.message.edit_text(f"✅ Класс успешно сменён на: {grade}")
+    file_path = data.get("path", "")
+    letters = await asyncio.to_thread(FileWork(file_path).get_class_letters, grade)
+    if len(letters) <= 1:
+        await finish_grade_change(callback, state, grade, letters[0] if letters else None)
+        return None
+
+    await state.update_data(grade=grade, letters=letters)
+    await callback.message.edit_text(CHOOSE_LETTER, reply_markup=await letters_kb(letters, prefix="letter2"))
+
+
+@router.callback_query(F.data.startswith("letter2_"))
+async def update_letter(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
+    data = await state.get_data()
+    letter = (callback.data or "").removeprefix("letter2_")
+    grade = data.get("grade")
+    if not grade or letter not in data.get("letters", []):
+        await callback.message.answer(STALE_GRADES)
+        return None
+
+    await finish_grade_change(callback, state, grade, letter)
 
 
 @router.message(Command("change_schedule"))
